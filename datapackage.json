@@ -1,0 +1,110 @@
+{
+  "name": "noaa-ghcnd",
+  "title": "NOAA Daily Global Historical Climatology Network (GHCN-DAILY)",
+  "description": "Meteorological observations from nearby land surface weather stations.",
+  "version": "0.1.0",
+  "contributors": [
+    {
+      "name": "Ethan Welty",
+      "email": "ethan.welty@gmail.com",
+      "roles": "Assembled and published the datapackage."
+    }
+  ],
+  "sources": [
+    {
+      "name": "NOAA GHCN-DAILY Data File Access",
+      "web": "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/"
+    }
+  ],
+  "resources": [
+    {
+      "name": "stations",
+      "title": "Station Metadata",
+      "path": "data/stations.csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "id",
+            "type": "string",
+            "description": "Station identifier."
+          },
+          {
+            "name": "name",
+            "type": "string",
+            "description": "Station name."
+          },
+          {
+            "name": "longitude",
+            "type": "number",
+            "description": "Longitude in decimal degrees (unknown datum)."
+          },
+          {
+            "name": "latitude",
+            "type": "number",
+            "description": "Latitude in decimal degrees (unknown datum)."
+          },
+          {
+            "name": "elevation",
+            "type": "number",
+            "description": "Elevation (m) above sea level (unknown datum)."
+          }
+        ]
+      }
+    },
+    {
+      "name": "data",
+      "title": "Station Data",
+      "path": "data/data.csv",
+      "schema": {
+        "fields": [
+          {
+            "name": "id",
+            "type": "string",
+            "description": "Station identifier."
+          },
+          {
+            "name": "t",
+            "type": "date",
+            "description": "Date (AKST:UTC-9).",
+            "format": "YYYY"
+          },
+          {
+            "name": "precipitation",
+            "type": "number",
+            "description": "Total precipitation (m)."
+          },
+          {
+            "name": "snowfall",
+            "type": "number",
+            "description": "Total snowfall (m)."
+          },
+          {
+            "name": "snow_depth",
+            "type": "number",
+            "description": "Depth of snow on the ground (m)."
+          },
+          {
+            "name": "snow_depth_water",
+            "type": "number",
+            "description": "Water equivalent of snow on the ground (m)."
+          },
+          {
+            "name": "air_temperature_avg",
+            "type": "number",
+            "description": "Average temperature (°C)."
+          },
+          {
+            "name": "air_temperature_min",
+            "type": "number",
+            "description": "Minimum temperature (°C)."
+          },
+          {
+            "name": "air_temperature_max",
+            "type": "number",
+            "description": "Maximum temperature (°C)."
+          },
+        ]
+      }
+    }
+  ]
+}
