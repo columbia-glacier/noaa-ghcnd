@@ -5,15 +5,15 @@
   "version": "0.1.0",
   "contributors": [
     {
-      "name": "Ethan Welty",
+      "title": "Ethan Welty",
       "email": "ethan.welty@gmail.com",
-      "roles": "Assembled and published the datapackage."
+      "role": "author"
     }
   ],
   "sources": [
     {
-      "name": "NOAA GHCN-DAILY Data File Access",
-      "web": "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/"
+      "title": "NOAA GHCN-DAILY Data File Access",
+      "path": "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/"
     }
   ],
   "resources": [
@@ -26,27 +26,30 @@
           {
             "name": "id",
             "type": "string",
-            "description": "Station identifier."
+            "description": "Station identifier"
           },
           {
             "name": "name",
             "type": "string",
-            "description": "Station name."
+            "description": "Station name"
           },
           {
             "name": "longitude",
             "type": "number",
-            "description": "Longitude in decimal degrees (unknown datum)."
+            "description": "Longitude (unknown datum)",
+            "unit": "°"
           },
           {
             "name": "latitude",
             "type": "number",
-            "description": "Latitude in decimal degrees (unknown datum)."
+            "description": "Latitude (unknown datum)",
+            "unit": "°"
           },
           {
             "name": "elevation",
             "type": "number",
-            "description": "Elevation (m) above sea level (unknown datum)."
+            "description": "Elevation above sea level (unknown datum)",
+            "unit": "m"
           }
         ]
       }
@@ -60,49 +63,56 @@
           {
             "name": "id",
             "type": "string",
-            "description": "Station identifier."
+            "description": "Station identifier"
           },
           {
             "name": "t",
             "type": "date",
-            "description": "Date (AKST:UTC-9).",
-            "format": "YYYY"
+            "description": "Date (AKST:UTC-9)",
+            "format": "%Y-%m-%d"
           },
           {
             "name": "precipitation",
             "type": "number",
-            "description": "Total precipitation (m)."
+            "description": "Total precipitation",
+            "unit": "m"
           },
           {
             "name": "snowfall",
             "type": "number",
-            "description": "Total snowfall (m)."
+            "description": "Total snowfall",
+            "unit": "m"
           },
           {
             "name": "snow_depth",
             "type": "number",
-            "description": "Depth of snow on the ground (m)."
+            "description": "Depth of snow on the ground",
+            "unit": "m"
           },
           {
             "name": "snow_depth_water",
             "type": "number",
-            "description": "Water equivalent of snow on the ground (m)."
+            "description": "Water equivalent of snow on the ground",
+            "unit": "m"
           },
           {
             "name": "air_temperature_avg",
             "type": "number",
-            "description": "Average temperature (°C)."
+            "description": "Average temperature",
+            "unit": "°C"
           },
           {
             "name": "air_temperature_min",
             "type": "number",
-            "description": "Minimum temperature (°C)."
+            "description": "Minimum temperature",
+            "unit": "°C"
           },
           {
             "name": "air_temperature_max",
             "type": "number",
-            "description": "Maximum temperature (°C)."
-          },
+            "description": "Maximum temperature",
+            "unit": "°C"
+          }
         ]
       }
     }
