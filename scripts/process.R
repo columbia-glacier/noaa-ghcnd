@@ -1,9 +1,4 @@
-# ---- Install missing dependencies ----
-
-packages <- c("rnoaa")
-if (length(setdiff(packages, rownames(installed.packages()))) > 0) {
-  install.packages(setdiff(packages, rownames(installed.packages())))
-}
+library(magrittr)
 
 # ---- Load functions ----
 
@@ -16,66 +11,96 @@ ghcnd_stations <- function() {
       stringsAsFactors = FALSE)
 }
 
-parse_noaa_ghcnd <- function(df) {
-  with(df, data.frame(
-    stringsAsFactors = FALSE,
-    id = id,
-    t = {
-      date %>%
-        format("%Y-%m-%d")
-    },
-    # Precipitation (tenths of mm)
-    precipitation = {
-      prcp %>%
-        divide_by(10) %>%
-        convert_units(from = mm, to = m)
-    },
-    # Snowfall (mm)
-    snowfall = {
-      snow %>%
-        convert_units(from = mm, to = m)
-    },
-    # # Water equivalent of snowfall (tenths of mm)
-    # snowfall_water = {
-    #   wesf %>%
-    #     divide_by(10) %>%
-    #     convert_units(from = mm, to = m)
-    # },
-    # Snow depth (mm)
-    snow_depth = {
-      snwd %>%
-        convert_units(from = mm, to = m)
-    },
-    # Water equivalent of snow on the ground (tenths of mm)
-    snow_depth_water = {
-      wesd %>%
-        divide_by(10) %>%
-        convert_units(from = mm, to = m)
-    },
-    # Average temperature (tenths of degrees C)
-    air_temperature_avg = {
-      tavg %>%
-        divide_by(10)
-    },
-    # Minimum temperature (tenths of degrees C)
-    air_temperature_min = {
-      tmin %>%
-        divide_by(10)
-    },
-    # Maximum temperature (tenths of degrees C)
-    air_temperature_max = {
-      tmax %>%
-        divide_by(10)
-    }
-    # # Daily total sunshine (minutes)
-    # sunshine = {
-    #   tsun %>%
-    #     convert_units(from = min, to = s)
-    # }
-  ))
-}
+# ---- Load parsers ----
 
-# ---- Process station data ----
+station_parsers <- list(
+  id = function(id) {
+    id
+  },
+  name = function(name) {
+    name
+  },
+  longitude = function(longitude) {
+    longitude %>%
+      units2::as_units("°") %>%
+      dpkg::set_field(description = "Longitude (unknown datum)")
+  },
+  latitude = function(latitude) {
+    latitude %>%
+      units2::as_units("°") %>%
+      dpkg::set_field(description = "Latitude (unknown datum)")
+  },
+  elevation = function(elevation) {
+    elevation %>%
+      units2::as_units("m") %>%
+      dpkg::set_field(description = "Elevation (unknown datum)")
+  }
+)
+
+data_parsers <- list(
+  station_id = function(id) {
+    id %>%
+      dpkg::set_field(description = "Station identifier")
+  },
+  t = function(date) {
+    date %>%
+      dpkg::set_field(description = "Date (AKST:UTC-9)", format = "%Y-%m-%d")
+  },
+  # Precipitation (tenths of mm)
+  precipitation = function(prcp) {
+    prcp %>%
+      divide_by(10) %>%
+      units2::convert_units("mm", "m") %>%
+      dpkg::set_field(description = "")
+  },
+  # Snowfall (mm)
+  snowfall = function(snow) {
+    snow %>%
+      units2::convert_units("mm", "m")
+  },
+  # Water equivalent of snowfall (tenths of mm)
+  snowfall_lwe = function(wesf) {
+    wesf %>%
+      divide_by(10) %>%
+      units2::convert_units("mm", "m")
+  },
+  # Snow depth (mm)
+  snow_thickness = function(snwd) {
+    snwd %>%
+      units2::convert_units("mm", "m")
+  },
+  # Water equivalent of snow on the ground (tenths of mm)
+  snow_thickness_lwe = function(wesd) {
+    wesd %>%
+      divide_by(10) %>%
+      units2::convert_units("mm", "m")
+  },
+  # Average temperature (tenths of degrees C)
+  air_temperature_avg = function(tavg) {
+    tavg %>%
+      divide_by(10) %>%
+      units2::as_units("°C")
+  },
+  # Minimum temperature (tenths of degrees C)
+  air_temperature_min = function(tmin) {
+    tmin %>%
+      divide_by(10) %>%
+      units2::as_units("°C")
+  },
+  # Maximum temperature (tenths of degrees C)
+  air_temperature_max = function(tmax) {
+    tmax %>%
+      divide_by(10) %>%
+      units2::as_units("°C")
+  },
+  # Daily total sunshine (minutes)
+  sunshine_duration = function(tsun) {
+    tsun %>%
+      units2::convert_units("min", "s")
+  }
+)
+
+# ---- Get data ----
 
 station_ids <- c(
   "USW00026442", # Valdez Weather Service Office
@@ -85,16 +110,53 @@ station_ids <- c(
   "USS0046M04S" # Sugarloaf Mountain
 )
 
-# Get metadata
-stations <- ghcnd_stations()
-# Write metadata to file
-stations %>%
-  subset(id %in% station_ids, c("id", "name", "longitude", "latitude", "elevation")) %>%
-  write.csv(file.path("data", "stations.csv"), quote = FALSE, na = "", row.names = FALSE)
-# Get data
-meteo <- rnoaa::meteo_pull_monitors(monitors = station_ids) %>%
-  parse_noaa_ghcnd() %>%
-  remove_empty(ignore = c("id", "t"))
-# Write data to file
-meteo %>%
-  write.csv(file.path("data", "data.csv"), quote = FALSE, na = "", row.names = FALSE)
+# Get station metadata
+stations <- ghcnd_stations() %>%
+  subset(id %in% station_ids)
+
+# Get station data
+data <- rnoaa::meteo_pull_monitors(monitors = station_ids)
+
+# ---- Build data package ----
+
+dp <- list(
+  stations = {
+    stations %>%
+      cgr::parse_table(station_parsers) %>%
+      dpkg::set_resource(
+        title = "Station metadata",
+        path = "data/stations.csv"
+      )
+  },
+  data = {
+    data %>%
+      cgr::parse_table(data_parsers) %>%
+      cgr::remove_empty_dimensions(ignore = c("station_id", "t")) %>%
+      dpkg::set_resource(
+        title = "Station data",
+        path = "data/data.csv",
+        schema = dpkg::schema(
+          foreignKeys = list(
+            dpkg::foreignKey("station_id", "stations", "id")
+          )
+        )
+      )
+  }
+) %>%
+  dpkg::set_package(
+    name = "noaa-ghcnd",
+    title = "NOAA Daily Global Historical Climatology Network (GHCN-DAILY)",
+    description = "Meteorological observations from nearby land surface weather stations.",
+    version = "0.1.0",
+    contributors = list(
+      dpkg::contributor("Ethan Welty", email = "ethan.welty@gmail.com", role = "author")
+    ),
+    sources = list(
+      dpkg::source("NOAA GHCN-DAILY Data File Access", path = "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/")
+    )
+  )
+
+# ---- Write data package ----
+
+dp %>%
+  dpkg::write_package()
